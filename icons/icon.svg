@@ -1,0 +1,33 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#007bff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0056b3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#grad1)" />
+  
+  <!-- Lock icon -->
+  <rect x="44" y="58" width="40" height="28" rx="4" fill="white" opacity="0.9"/>
+  
+  <!-- Lock shackle -->
+  <path d="M 54 58 Q 54 44 64 44 Q 74 44 74 58" 
+        fill="none" 
+        stroke="white" 
+        stroke-width="6" 
+        opacity="0.9"/>
+  
+  <!-- Key hole -->
+  <circle cx="64" cy="68" r="3" fill="url(#grad1)"/>
+  <rect x="62" y="68" width="4" height="8" fill="url(#grad1)"/>
+  
+  <!-- Small key icon in corner -->
+  <g transform="translate(85,85) scale(0.8)">
+    <circle cx="8" cy="8" r="6" fill="#ffc107" stroke="white" stroke-width="1"/>
+    <rect x="12" y="7" width="16" height="2" fill="#ffc107"/>
+    <rect x="26" y="5" width="2" height="2" fill="#ffc107"/>
+    <rect x="26" y="9" width="2" height="2" fill="#ffc107"/>
+  </g>
+</svg>

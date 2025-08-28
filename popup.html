@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 437px;
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            margin: 0;
+            min-height: 500px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .tab-container {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+        
+        .tab:hover {
+            background: rgba(79, 172, 254, 0.1);
+            color: #4facfe;
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #444;
+            font-size: 14px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(79, 172, 254, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 172, 254, 0.4);
+        }
+        
+        .secondary-btn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+        
+        .secondary-btn:hover {
+            box-shadow: 0 4px 8px rgba(149, 165, 166, 0.4);
+        }
+        
+        .danger-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+        
+        .danger-btn:hover {
+            box-shadow: 0 4px 8px rgba(255, 107, 107, 0.4);
+        }
+        
+        .account-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .account-item {
+            padding: 16px;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+        
+        .account-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .account-item:last-child {
+            border-bottom: none;
+        }
+        
+        .account-info {
+            flex: 0 0 70%;
+            padding-right: 12px;
+            min-width: 0; /* 確保可以縮小 */
+            overflow: hidden;
+        }
+        
+        .account-username {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .account-url {
+            font-size: 12px;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: help;
+        }
+        
+        .account-url:hover {
+            color: #4facfe;
+        }
+        
+        .account-actions {
+            display: flex;
+            gap: 6px;
+            flex: 0 0 30%;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .small-btn {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            font-size: 12px;
+            min-width: auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .small-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* 解鎖按鈕特殊樣式 */
+        #unlockBtn {
+            width: auto;
+            height: auto;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        #unlockBtn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .current-site {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #4facfe;
+            font-weight: 500;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        
+        /* 主密鑰區域樣式 */
+        .master-key-section {
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+            border: 1px solid rgba(255, 193, 7, 0.2);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .key-status {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .key-status.success {
+            color: #28a745;
+        }
+        
+        .key-status.error {
+            color: #dc3545;
+        }
+        
+        .key-status.warning {
+            color: #ffc107;
+        }
+        
+        /* 自定义滚动条 */
+        .account-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .account-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .account-list::-webkit-scrollbar-thumb {
+            background: #4facfe;
+            border-radius: 3px;
+        }
+        
+        .account-list::-webkit-scrollbar-thumb:hover {
+            background: #00f2fe;
+        }
+        
+        /* 解密失敗樣式 */
+        .account-item.decryption-failed {
+            opacity: 0.6;
+            background: #fff5f5;
+        }
+        
+        .decrypt-status {
+            font-size: 11px;
+            color: #dc3545;
+            margin-top: 2px;
+        }
+        
+        .account-item.decryption-failed .account-username {
+            color: #dc3545;
+            font-style: italic;
+        }
+        
+        button[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+        
+        /* 複製按鈕樣式 */
+        .small-btn[data-action="copy"] {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .small-btn[data-action="copy"]:hover {
+            background: linear-gradient(135deg, #218838 0%, #1ab786 100%);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        /* 編輯按鈕樣式 */
+        .small-btn.secondary-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+        
+        .small-btn.secondary-btn:hover {
+            background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+        }
+        
+        /* 刪除按鈕樣式 */
+        .small-btn.danger-btn {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        
+        .small-btn.danger-btn:hover {
+            background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h3>🔐 Quick Login Manager</h3>
+        </div>
+        
+        <div class="content">
+            <!-- 主密鑰輸入區域 -->
+            <div class="master-key-section" id="masterKeySection">
+                <div class="form-group">
+                    <label>🔐 主密鑰:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="password" id="masterKey" placeholder="輸入主密鑰來解鎖帳號資料" style="flex: 1;">
+                        <button id="unlockBtn" class="small-btn">解鎖</button>
+                    </div>
+                    <div id="keyStatus" class="key-status"></div>
+                    <div style="font-size: 11px; color: #888; margin-top: 8px; line-height: 1.3;">
+                        ℹ️ 主密鑰在瀏覽器關閉或擴充功能重新載入時會自動清除，需重新輸入以確保安全性
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主要內容區域 -->
+            <div class="main-content" id="mainContent" style="display: none;">
+                <div class="current-site" id="currentSite">
+                    📍 目前網站: <span id="currentUrl">載入中...</span>
+                </div>
+
+                <div class="tab-container">
+                    <button class="tab active" data-tab="fill">自動填入</button>
+                    <button class="tab" data-tab="manage">管理帳號</button>
+                    <button class="tab" data-tab="add">新增</button>
+                    <button class="tab" data-tab="settings">設定</button>
+                </div>
+
+            <div id="fillTab" class="tab-content active">
+                <div id="siteAccounts" class="account-list">
+                    <div class="empty-state">
+                        <div class="icon">🔑</div>
+                        <div>沒有找到目前網站的帳號</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="manageTab" class="tab-content">
+                <div class="form-group">
+                    <label>選擇網站:</label>
+                    <select id="siteFilter">
+                        <option value="">所有網站</option>
+                    </select>
+                </div>
+                <div id="allAccounts" class="account-list">
+                    <div class="empty-state">
+                        <div class="icon">📝</div>
+                        <div>沒有儲存的帳號</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="addTab" class="tab-content">
+                <form id="addAccountForm">
+                    <div class="form-group">
+                        <label>🌐 網站URL:</label>
+                        <input type="text" id="websiteUrl" placeholder="https://example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🎯 匹配模式:</label>
+                        <select id="matchMode">
+                            <option value="domain">🏠 域名匹配 (整個網站)</option>
+                            <option value="path">📁 路徑匹配 (特定頁面)</option>
+                        </select>
+                        <div style="font-size: 12px; color: #666; margin-top: 4px; background: #f8f9fa; padding: 8px; border-radius: 4px; line-height: 1.4;">
+                            <strong>🏠 域名匹配：</strong>在整個網站都會自動填入<br>
+                            <strong>📁 路徑匹配：</strong>只在相同路徑下才會自動填入
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>👤 使用者名稱:</label>
+                        <input type="text" id="username" placeholder="輸入使用者名稱或信箱" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🔒 密碼:</label>
+                        <input type="password" id="password" placeholder="輸入密碼" required>
+                    </div>
+                    <div class="form-group">
+                        <label>⚙️ 使用者名稱選擇器 (可選):</label>
+                        <input type="text" id="usernameSelector" placeholder="例如: #username, .user-input">
+                    </div>
+                    <div class="form-group">
+                        <label>⚙️ 密碼選擇器 (可選):</label>
+                        <input type="text" id="passwordSelector" placeholder="例如: #password, .pass-input">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" style="flex: 1;">💾 儲存帳號</button>
+                        <button type="button" id="cancelEditBtn" style="flex: 1; display: none;" class="secondary-btn">❌ 取消</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="settingsTab" class="tab-content">
+                <div class="form-group">
+                    <label>🔑 更改主密鑰:</label>
+                    <input type="password" id="newMasterKey" placeholder="輸入新的主密鑰">
+                </div>
+                <div class="form-group">
+                    <label>🔑 確認主密鑰:</label>
+                    <input type="password" id="confirmMasterKey" placeholder="再次輸入新密鑰">
+                </div>
+                <button id="changeMasterKeyBtn">🔄 更改主密鑰</button>
+                <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 6px; font-size: 12px; color: #856404;">
+                    ⚠️ 更改主密鑰後，所有已儲存的帳號資料將使用新密鑰重新加密。請妥善保管您的主密鑰！
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="url-utils.js"></script>
+    <script src="crypto.js"></script>
+    <script src="popup-debug.js"></script>
+</body>
+</html>
