@@ -255,6 +255,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (cancelBtn) {
         cancelBtn.addEventListener('click', cancelEdit);
     }
+    
+    // 添加調試功能事件監聽器
+    const debugCheckBtn = document.getElementById('debugCheckMasterKey');
+    const debugSetTestBtn = document.getElementById('debugSetTestKey');
+    const debugClearBtn = document.getElementById('debugClearKey');
+    const debugSetCustomBtn = document.getElementById('debugSetCustomKey');
+    const debugSetTimeoutBtn = document.getElementById('debugSetTimeout');
+    
+    if (debugCheckBtn) {
+        debugCheckBtn.addEventListener('click', debugCheckMasterKeyStatus);
+    }
+    if (debugSetTestBtn) {
+        debugSetTestBtn.addEventListener('click', debugSetTestMasterKey);
+    }
+    if (debugClearBtn) {
+        debugClearBtn.addEventListener('click', debugClearMasterKey);
+    }
+    if (debugSetCustomBtn) {
+        debugSetCustomBtn.addEventListener('click', debugSetCustomMasterKey);
+    }
+    if (debugSetTimeoutBtn) {
+        debugSetTimeoutBtn.addEventListener('click', debugSetTimeout);
+    }
 });
 
 async function getCurrentTab() {
@@ -874,5 +897,158 @@ function shortenUrl(url, maxLength = 40) {
 }
 
 // CSP修復完成，不再需要全域函數
+
+// === 調試功能函數 ===
+
+async function debugCheckMasterKeyStatus() {
+    const statusDiv = document.getElementById('debugStatus');
+    statusDiv.innerHTML = '🔍 檢查中...';
+    
+    try {
+        // 檢查 background 中的主金鑰狀態
+        const response = await chrome.runtime.sendMessage({ action: 'getMasterKey' });
+        
+        // 檢查本地存儲狀態
+        const localStorage = await chrome.storage.local.get(['encryptedMasterKey', 'masterKeyExpireTime', 'installTime', 'deviceFingerprint']);
+        
+        const now = Date.now();
+        const isExpired = localStorage.masterKeyExpireTime ? now > localStorage.masterKeyExpireTime : false;
+        const timeLeft = localStorage.masterKeyExpireTime ? 
+            Math.max(0, Math.floor((localStorage.masterKeyExpireTime - now) / (1000 * 60))) : 0;
+        
+        const status = `<strong>📊 背景腳本狀態:</strong>
+• 有主金鑰: ${response.hasKey ? '✅ 是' : '❌ 否'}
+• 設定時間: ${response.setTime ? new Date(response.setTime).toLocaleString() : '⚪ 無'}
+
+<strong>💾 本地存儲狀態:</strong>
+• 有加密金鑰: ${localStorage.encryptedMasterKey ? '✅ 是' : '❌ 否'}
+• 裝置指紋: ${localStorage.deviceFingerprint ? '✅ 已建立' : '❌ 未建立'}
+• 安裝時間: ${localStorage.installTime ? new Date(parseInt(localStorage.installTime)).toLocaleString() : '⚪ 無'}
+• 過期狀態: ${isExpired ? '🔴 已過期' : localStorage.masterKeyExpireTime ? '🟢 有效' : '⚪ 無資料'}
+• 剩餘時間: ${timeLeft > 0 ? `⏰ ${Math.floor(timeLeft / 60)}小時${timeLeft % 60}分鐘` : localStorage.masterKeyExpireTime ? '⏰ 已到期' : '⚪ 無'}
+• 到期時間: ${localStorage.masterKeyExpireTime ? new Date(localStorage.masterKeyExpireTime).toLocaleString() : '⚪ 無'}
+
+<strong>🔄 Service Worker 生命週期:</strong>
+• 記憶體金鑰持久性: ${response.hasKey && localStorage.encryptedMasterKey ? '🟢 雙重保護' : response.hasKey ? '🟡 僅記憶體' : localStorage.encryptedMasterKey ? '🟡 僅存儲' : '🔴 無保護'}
+• 裝置綁定加密: ${localStorage.deviceFingerprint ? '🟢 已啟用' : '🟡 待建立'}`;
+        
+        statusDiv.innerHTML = status;
+    } catch (error) {
+        statusDiv.innerHTML = `<span style="color: red;">❌ 錯誤: ${error.message}</span>`;
+    }
+}
+
+async function debugSetTestMasterKey() {
+    const statusDiv = document.getElementById('debugStatus');
+    const timeoutHours = parseInt(document.getElementById('debugTimeout').value) || 8;
+    statusDiv.innerHTML = '🧪 設定測試主金鑰...';
+    
+    try {
+        const testKey = 'test123';
+        const sessionTimeout = timeoutHours * 60 * 60 * 1000; // 轉換為毫秒
+        
+        const response = await chrome.runtime.sendMessage({ 
+            action: 'setMasterKey', 
+            masterKey: testKey,
+            sessionTimeout: sessionTimeout
+        });
+        
+        if (response.success) {
+            statusDiv.innerHTML = `✅ 測試主金鑰設定成功！
+• 金鑰: test123
+• 持久時間: ${timeoutHours} 小時
+• 到期時間: ${new Date(Date.now() + sessionTimeout).toLocaleString()}`;
+            setTimeout(debugCheckMasterKeyStatus, 2000);
+        } else {
+            statusDiv.innerHTML = `❌ 設定失敗`;
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `❌ 錯誤: ${error.message}`;
+    }
+}
+
+async function debugSetCustomMasterKey() {
+    const input = document.getElementById('debugKeyInput');
+    const customKey = input.value.trim();
+    const statusDiv = document.getElementById('debugStatus');
+    const timeoutHours = parseInt(document.getElementById('debugTimeout').value) || 8;
+    
+    if (!customKey) {
+        statusDiv.innerHTML = `🟡 請輸入自訂主金鑰`;
+        return;
+    }
+    
+    statusDiv.innerHTML = '🔧 設定自訂主金鑰...';
+    
+    try {
+        const sessionTimeout = timeoutHours * 60 * 60 * 1000; // 轉換為毫秒
+        
+        const response = await chrome.runtime.sendMessage({ 
+            action: 'setMasterKey', 
+            masterKey: customKey,
+            sessionTimeout: sessionTimeout
+        });
+        
+        if (response.success) {
+            statusDiv.innerHTML = `✅ 自訂主金鑰設定成功！
+• 金鑰: ${customKey}
+• 持久時間: ${timeoutHours} 小時
+• 到期時間: ${new Date(Date.now() + sessionTimeout).toLocaleString()}`;
+            input.value = '';
+            setTimeout(debugCheckMasterKeyStatus, 2000);
+        } else {
+            statusDiv.innerHTML = `❌ 設定失敗`;
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `❌ 錯誤: ${error.message}`;
+    }
+}
+
+async function debugClearMasterKey() {
+    const statusDiv = document.getElementById('debugStatus');
+    
+    if (!confirm('確定要清除所有主金鑰資料嗎？這將包括記憶體和存儲中的資料。')) {
+        return;
+    }
+    
+    statusDiv.innerHTML = '🗑️ 清除主金鑰...';
+    
+    try {
+        const response = await chrome.runtime.sendMessage({ action: 'clearMasterKey' });
+        
+        if (response.success) {
+            statusDiv.innerHTML = `✅ 主金鑰已完全清除
+• 記憶體: 已清除
+• 本地存儲: 已清除
+• 狀態: 需重新設定主金鑰`;
+            setTimeout(debugCheckMasterKeyStatus, 2000);
+        } else {
+            statusDiv.innerHTML = `❌ 清除失敗`;
+        }
+    } catch (error) {
+        statusDiv.innerHTML = `❌ 錯誤: ${error.message}`;
+    }
+}
+
+async function debugSetTimeout() {
+    const statusDiv = document.getElementById('debugStatus');
+    const timeoutHours = parseInt(document.getElementById('debugTimeout').value) || 24;
+    
+    if (timeoutHours < 1 || timeoutHours > 168) {
+        statusDiv.innerHTML = `🟡 持久時間必須在 1-168 小時之間`;
+        return;
+    }
+    
+    statusDiv.innerHTML = `⏰ 持久時間已設定為 ${timeoutHours} 小時
+下次設定主金鑰時將使用此時間。
+目前已設定的主金鑰不會受到影響。`;
+}
+
+// 自動檢查主金鑰狀態（延遲載入）
+setTimeout(() => {
+    if (document.getElementById('debugStatus')) {
+        debugCheckMasterKeyStatus();
+    }
+}, 1000);
 
 console.log('Popup script loaded successfully');

@@ -465,11 +465,45 @@
                 <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 6px; font-size: 12px; color: #856404;">
                     ⚠️ 更改主密鑰後，所有已儲存的帳號資料將使用新密鑰重新加密。請妥善保管您的主密鑰！
                 </div>
+                
+                <!-- 調試區域 -->
+                <div style="margin-top: 30px; border-top: 2px solid #e9ecef; padding-top: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #666; font-size: 16px;">🐛 主金鑰調試工具</h4>
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+                        <button id="debugCheckMasterKey" class="secondary-btn" style="padding: 8px 12px; font-size: 12px;">🔍 檢查狀態</button>
+                        <button id="debugSetTestKey" class="secondary-btn" style="padding: 8px 12px; font-size: 12px;">🧪 設定測試金鑰</button>
+                        <button id="debugClearKey" class="danger-btn" style="padding: 8px 12px; font-size: 12px;">🗑️ 清除金鑰</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🔑 自訂測試金鑰:</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="debugKeyInput" placeholder="輸入測試用主金鑰" style="flex: 1;">
+                            <button id="debugSetCustomKey" class="secondary-btn" style="padding: 8px 12px; font-size: 12px;">設定</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📊 持久化時間 (小時):</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="number" id="debugTimeout" value="8" min="1" max="168" style="flex: 1;">
+                            <button id="debugSetTimeout" class="secondary-btn" style="padding: 8px 12px; font-size: 12px;">更新</button>
+                        </div>
+                    </div>
+                    
+                    <div id="debugStatus" style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 12px; min-height: 60px; line-height: 1.4; font-family: monospace;"></div>
+                    
+                    <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 4px; font-size: 11px; color: #0066cc;">
+                        ℹ️ 此工具用於調試主金鑰的持久化功能。正常使用時不需要手動操作這些功能。
+                    </div>
+                </div>
             </div>
             </div>
         </div>
     </div>
 
+    <script src="shared-crypto.js"></script>
     <script src="url-utils.js"></script>
     <script src="crypto.js"></script>
     <script src="popup-debug.js"></script>

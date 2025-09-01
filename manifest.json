@@ -18,7 +18,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["url-utils.js", "crypto.js", "content.js"],
+      "js": ["shared-crypto.js", "url-utils.js", "content.js"],
       "run_at": "document_end"
     }
   ],

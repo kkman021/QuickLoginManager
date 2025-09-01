@@ -2,6 +2,9 @@ let isQuickLoginEnabled = true;
 let currentSiteAccounts = [];
 let masterKey = null;
 
+// 使用共用的加密工具類
+const crypto = new SharedPasswordCrypto();
+
 // 從background script請求主密鑰和帳號資料
 async function requestAccountData() {
     return new Promise((resolve) => {

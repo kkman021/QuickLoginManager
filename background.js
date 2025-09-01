@@ -1,199 +1,5 @@
-// Manifest V3不支援importScripts，需要直接複製所需的類別
-
-// 首先載入URLUtils（直接複製）
-class URLUtils {
-    static isSupportedProtocol(url) {
-        return url && (url.startsWith('http://') || url.startsWith('https://'));
-    }
-    
-    static safeGetOrigin(url) {
-        if (!this.isSupportedProtocol(url)) return null;
-        try {
-            return new URL(url).origin;
-        } catch (error) {
-            return null;
-        }
-    }
-    
-    static safeGetHostname(url) {
-        if (!this.isSupportedProtocol(url)) return null;
-        try {
-            return new URL(url).hostname;
-        } catch (error) {
-            return null;
-        }
-    }
-    
-    static urlsMatch(url1, url2, matchMode = 'domain') {
-        if (!url1 || !url2) return false;
-        if (url1 === url2) return true;
-        
-        if (matchMode === 'path') {
-            return this.pathsMatch(url1, url2);
-        } else {
-            return this.domainsMatch(url1, url2);
-        }
-    }
-    
-    static domainsMatch(url1, url2) {
-        if (!url1 || !url2) return false;
-        
-        const origin1 = this.safeGetOrigin(url1);
-        const origin2 = this.safeGetOrigin(url2);
-        if (origin1 && origin2 && origin1 === origin2) return true;
-        
-        const hostname1 = this.safeGetHostname(url1);
-        const hostname2 = this.safeGetHostname(url2);
-        if (hostname1 && hostname2 && hostname1 === hostname2) return true;
-        
-        return false;
-    }
-    
-    static pathsMatch(url1, url2) {
-        if (!url1 || !url2) return false;
-        
-        try {
-            const urlObj1 = new URL(url1);
-            const urlObj2 = new URL(url2);
-            
-            if (urlObj1.origin !== urlObj2.origin) {
-                return false;
-            }
-            
-            const path1 = urlObj1.pathname.replace(/\/$/, '') || '/';
-            const path2 = urlObj2.pathname.replace(/\/$/, '') || '/';
-            
-            if (path1 === '/' || path2 === '/') {
-                return true;
-            }
-            
-            return path2.startsWith(path1) || path1.startsWith(path2);
-        } catch (error) {
-            console.warn('路徑匹配失敗:', url1, url2, error);
-            return this.domainsMatch(url1, url2);
-        }
-    }
-    
-    static filterAccountsByUrl(accounts, targetUrl, excludeDecryptionFailed = false) {
-        if (!Array.isArray(accounts) || !targetUrl) return [];
-        
-        return accounts.filter(account => {
-            if (excludeDecryptionFailed && account.decryptionFailed) return false;
-            const matchMode = account.matchMode || 'domain';
-            return this.urlsMatch(account.url, targetUrl, matchMode);
-        });
-    }
-}
-
-// 然後是crypto類別
-class PasswordCrypto {
-    constructor() {
-        this.masterKey = null;
-    }
-    
-    setMasterKey(key) {
-        this.masterKey = key;
-    }
-    
-    clearMasterKey() {
-        this.masterKey = null;
-    }
-    
-    hasMasterKey() {
-        return this.masterKey !== null && this.masterKey !== '';
-    }
-    
-    encrypt(text, key) {
-        if (!text || !key) return text;
-        
-        try {
-            const keyHash = this.hashString(key);
-            let encrypted = '';
-            
-            for (let i = 0; i < text.length; i++) {
-                const keyChar = keyHash.charCodeAt(i % keyHash.length);
-                const textChar = text.charCodeAt(i);
-                encrypted += String.fromCharCode(textChar ^ keyChar);
-            }
-            
-            const checksum = this.hashString(text).substring(0, 8);
-            const result = checksum + '|' + encrypted;
-            
-            return btoa(result);
-        } catch (error) {
-            console.error('加密失敗:', error);
-            return text;
-        }
-    }
-    
-    decrypt(encryptedText, key) {
-        if (!encryptedText || !key) return '';
-        
-        try {
-            const decoded = atob(encryptedText);
-            const parts = decoded.split('|');
-            
-            if (parts.length !== 2) {
-                return '';
-            }
-            
-            const [expectedChecksum, encrypted] = parts;
-            const keyHash = this.hashString(key);
-            let decrypted = '';
-            
-            for (let i = 0; i < encrypted.length; i++) {
-                const keyChar = keyHash.charCodeAt(i % keyHash.length);
-                const encryptedChar = encrypted.charCodeAt(i);
-                decrypted += String.fromCharCode(encryptedChar ^ keyChar);
-            }
-            
-            const actualChecksum = this.hashString(decrypted).substring(0, 8);
-            if (expectedChecksum !== actualChecksum) {
-                console.warn('解密校驗失敗，可能密鑰錯誤');
-                return '';
-            }
-            
-            return decrypted;
-        } catch (error) {
-            console.error('解密失敗:', error);
-            return '';
-        }
-    }
-    
-    hashString(str) {
-        let hash = 0;
-        if (str.length === 0) return hash.toString();
-        
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        
-        return Math.abs(hash).toString(36);
-    }
-    
-    decryptAccount(account) {
-        if (!this.hasMasterKey() || !account.encrypted) {
-            return account;
-        }
-        
-        const decryptedUsername = this.decrypt(account.username, this.masterKey);
-        const decryptedPassword = this.decrypt(account.password, this.masterKey);
-        
-        return {
-            ...account,
-            username: decryptedUsername,
-            password: decryptedPassword,
-            decryptionFailed: !decryptedUsername && !decryptedPassword
-        };
-    }
-    
-    decryptAccounts(accounts) {
-        if (!Array.isArray(accounts)) return [];
-        return accounts.map(account => this.decryptAccount(account));
-    }
-}
+// 載入共用模組
+importScripts('shared-crypto.js', 'url-utils.js');
 
 chrome.runtime.onInstalled.addListener(() => {
     console.log('Quick Login Manager 已安装');
@@ -206,11 +12,27 @@ chrome.action.onClicked.addListener((tab) => {
 // 存儲主密鑰（僅在背景頁面生命週期內）
 let backgroundMasterKey = null;
 let masterKeySetTime = null;
-const crypto = new PasswordCrypto();
+const crypto = new SharedPasswordCrypto();
+
+// Service Worker 啟動時嘗試載入主金鑰
+async function initializeMasterKey() {
+    try {
+        const savedMasterKey = await crypto.loadMasterKeyFromStorage();
+        if (savedMasterKey) {
+            backgroundMasterKey = savedMasterKey;
+            masterKeySetTime = Date.now();
+            crypto.setMasterKey(savedMasterKey);
+            console.log('已從存儲載入主金鑰');
+        }
+    } catch (error) {
+        console.error('載入主金鑰失敗:', error);
+    }
+}
 
 // Service Worker 生命週期事件
-self.addEventListener('activate', () => {
+self.addEventListener('activate', async () => {
     console.log('Service Worker activated');
+    await initializeMasterKey();
 });
 
 self.addEventListener('install', () => {
@@ -222,12 +44,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         backgroundMasterKey = message.masterKey;
         masterKeySetTime = Date.now();
         crypto.setMasterKey(message.masterKey);
-        console.log('主密鑰已設定到 Background Service Worker 記憶體中');
+        
+        // 將主金鑰加密存儲到本地
+        crypto.saveMasterKeyToStorage(message.masterKey, message.sessionTimeout || 8 * 60 * 60 * 1000)
+            .then(success => {
+                if (success) {
+                    console.log('主密鑰已設定並存儲到本地');
+                } else {
+                    console.warn('主密鑰設定成功但存儲失敗');
+                }
+            });
+        
         sendResponse({ success: true });
         return true;
     }
     
     if (message.action === 'getMasterKey') {
+        // 如果記憶體中沒有主金鑰，嘗試從存儲載入
+        if (!backgroundMasterKey) {
+            initializeMasterKey().then(() => {
+                const keyStatus = {
+                    masterKey: backgroundMasterKey,
+                    hasKey: !!backgroundMasterKey,
+                    setTime: masterKeySetTime
+                };
+                sendResponse(keyStatus);
+            });
+            return true;
+        }
+        
         const keyStatus = {
             masterKey: backgroundMasterKey,
             hasKey: !!backgroundMasterKey,
@@ -237,12 +82,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
     
+    if (message.action === 'clearMasterKey') {
+        backgroundMasterKey = null;
+        masterKeySetTime = null;
+        crypto.clearMasterKey();
+        
+        // 清除存儲的主金鑰
+        crypto.clearMasterKeyFromStorage()
+            .then(success => {
+                console.log('主密鑰已清除:', success);
+                sendResponse({ success });
+            });
+        
+        return true;
+    }
+    
     if (message.action === 'getDecryptedAccounts') {
-        chrome.storage.sync.get(['accounts'], (result) => {
+        chrome.storage.sync.get(['accounts'], async (result) => {
             const encryptedAccounts = result.accounts || [];
             
+            // 如果記憶體中沒有主金鑰，嘗試從存儲載入
             if (!backgroundMasterKey) {
-                // 沒有主密鑰，返回空數組
+                await initializeMasterKey();
+            }
+            
+            if (!backgroundMasterKey) {
+                // 仍然沒有主密鑰，返回空數組
                 sendResponse({ success: false, accounts: [] });
                 return;
             }
@@ -269,11 +134,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     
     if (message.action === 'getAllDecryptedAccounts') {
-        chrome.storage.sync.get(['accounts'], (result) => {
+        chrome.storage.sync.get(['accounts'], async (result) => {
             const encryptedAccounts = result.accounts || [];
             
+            // 如果記憶體中沒有主金鑰，嘗試從存儲載入
             if (!backgroundMasterKey) {
-                // 沒有主密鑰，返回失敗
+                await initializeMasterKey();
+            }
+            
+            if (!backgroundMasterKey) {
+                // 仍然沒有主密鑰，返回失敗
                 sendResponse({ success: false, accounts: [], error: 'No master key' });
                 return;
             }
